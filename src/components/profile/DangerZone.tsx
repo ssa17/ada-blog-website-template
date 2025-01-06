@@ -44,9 +44,9 @@ export function DangerZone() {
 
       if (postsError) throw postsError;
 
-      // Finally, delete the user's auth account
-      const { error: deleteError } = await supabase.auth.updateUser({
-        data: { deleted: true }
+      // Call the Edge Function to delete the user from Auth
+      const { error: deleteError } = await supabase.functions.invoke('delete-user', {
+        body: { user_id: session.user.id }
       });
 
       if (deleteError) throw deleteError;
