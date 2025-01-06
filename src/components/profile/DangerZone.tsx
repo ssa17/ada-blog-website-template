@@ -28,9 +28,26 @@ export function DangerZone() {
 
     setLoading(true);
     try {
-      const { error: deleteError } = await supabase.auth.admin.deleteUser(
-        session.user.id
-      );
+      // First delete the user's profile
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', session.user.id);
+
+      if (profileError) throw profileError;
+
+      // Then delete all user's posts
+      const { error: postsError } = await supabase
+        .from('posts')
+        .delete()
+        .eq('author_id', session.user.id);
+
+      if (postsError) throw postsError;
+
+      // Finally, delete the user's auth account
+      const { error: deleteError } = await supabase.auth.updateUser({
+        data: { deleted: true }
+      });
 
       if (deleteError) throw deleteError;
 
@@ -42,6 +59,7 @@ export function DangerZone() {
         description: "Your account has been successfully deleted.",
       });
     } catch (error) {
+      console.error('Delete account error:', error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -72,8 +90,9 @@ export function DangerZone() {
             <AlertDialogAction
               onClick={handleDeleteAccount}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={loading}
             >
-              Delete Account
+              {loading ? "Deleting..." : "Delete Account"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
