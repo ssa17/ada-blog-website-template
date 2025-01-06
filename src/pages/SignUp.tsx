@@ -25,17 +25,19 @@ export default function SignUp() {
     e.preventDefault();
     
     try {
-      const { error } = await supabase
+      // Generate a UUID for the new profile
+      const { data: newProfile, error: insertError } = await supabase
         .from("profiles")
-        .insert([
-          {
-            username: formData.username,
-            email: formData.email,
-            password: formData.password, // Note: In a production app, you should hash the password
-          },
-        ]);
+        .insert({
+          id: crypto.randomUUID(),
+          username: formData.username,
+          email: formData.email,
+          password: formData.password, // Note: In a production app, you should hash the password
+        })
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (insertError) throw insertError;
 
       toast({
         title: "Success!",
