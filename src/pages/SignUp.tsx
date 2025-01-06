@@ -25,7 +25,6 @@ export default function SignUp() {
     e.preventDefault();
     
     try {
-      // Generate a UUID for the new profile
       const { data: newProfile, error: insertError } = await supabase
         .from("profiles")
         .insert({
