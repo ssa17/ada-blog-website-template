@@ -10,21 +10,61 @@ export default function SignUp() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
   const [formData, setFormData] = useState({
     username: "",
     email: "",
     password: "",
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const checkUsername = async (username: string) => {
+    if (username.length < 3) {
+      setUsernameAvailable(null);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('username', username)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error checking username:', error);
+        return;
+      }
+
+      setUsernameAvailable(data === null);
+    } catch (error) {
+      console.error('Error checking username:', error);
+    }
+  };
+
+  const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: value,
     });
+
+    if (name === 'username') {
+      await checkUsername(value);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    
+    if (!usernameAvailable) {
+      toast({
+        variant: "destructive",
+        title: "Username not available",
+        description: "Please choose a different username.",
+      });
+      return;
+    }
+    
     setLoading(true);
     
     try {
@@ -93,7 +133,23 @@ export default function SignUp() {
             value={formData.username}
             onChange={handleChange}
             disabled={loading}
+            className={
+              usernameAvailable !== null
+                ? usernameAvailable
+                  ? "border-green-500"
+                  : "border-red-500"
+                : ""
+            }
           />
+          {formData.username.length >= 3 && (
+            <p className={`text-sm mt-1 ${
+              usernameAvailable ? "text-green-600" : "text-red-600"
+            }`}>
+              {usernameAvailable
+                ? "Username is available"
+                : "Username is already taken"}
+            </p>
+          )}
         </div>
         <div>
           <label htmlFor="email" className="block text-sm font-medium mb-1">
@@ -123,7 +179,11 @@ export default function SignUp() {
             disabled={loading}
           />
         </div>
-        <Button type="submit" className="w-full" disabled={loading}>
+        <Button 
+          type="submit" 
+          className="w-full" 
+          disabled={loading || !usernameAvailable}
+        >
           {loading ? "Signing up..." : "Sign Up"}
         </Button>
       </form>
