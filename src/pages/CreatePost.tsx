@@ -116,25 +116,34 @@ export default function CreatePost() {
             Content
           </label>
           <Editor
-            apiKey={editorConfig.apiKey}
-            onInit={(evt, editor) => editorRef.current = editor}
-            init={{
-              height: 400,
-              menubar: false,
-              plugins: [
-                'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
-                'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-                'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
-              ],
-              toolbar: 'undo redo | blocks | ' +
-                'bold italic forecolor | alignleft aligncenter ' +
-                'alignright alignjustify | bullist numlist outdent indent | ' +
-                'removeformat | help',
-              content_style: 'body { font-family:Inter,Arial,sans-serif; font-size:14px }'
-            }}
-            onEditorChange={(content) => {
-              setValue("content", content);
-            }}
+              apiKey={editorConfig.apiKey}
+              onInit={(evt, editor) => editorRef.current = editor}
+              init={{
+                height: 400,
+                menubar: false,
+                plugins: [
+                  'advlist', 'autolink', 'lists', 'link', 'charmap', 'preview',
+                  'anchor', 'searchreplace', 'visualblocks', 'fullscreen',
+                  'insertdatetime', 'table', 'codesample', 'help', 'wordcount'
+                ],
+                toolbar: 'undo redo | blocks | ' +
+                    'bold italic underline forecolor | alignleft aligncenter alignright | ' +
+                    'bullist numlist outdent indent | ' +
+                    'link codesample | removeformat | help',
+                content_style: 'body { font-family:Inter,Arial,sans-serif; font-size:14px }',
+                codesample_languages: [
+                  { text: 'HTML/XML', value: 'markup' },
+                  { text: 'JavaScript', value: 'javascript' },
+                  { text: 'CSS', value: 'css' },
+                  { text: 'Python', value: 'python' },
+                  { text: 'Java', value: 'java' },
+                  { text: 'C', value: 'c' },
+                  { text: 'C++', value: 'cpp' }
+                ]
+              }}
+              onEditorChange={(content) => {
+                setValue("content", content);
+              }}
           />
         </div>
         <Button type="submit" className="w-full md:w-auto">Create Post</Button>

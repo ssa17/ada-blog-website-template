@@ -31,7 +31,7 @@ export default function Index() {
     <div className="min-h-screen">
       <section className="w-full bg-secondary/50 dark:bg-secondary/10">
         <div className="container py-20">
-          <h1 className="text-5xl font-bold mb-6">Welcome to ADA Blog</h1>
+          <h1 className="text-5xl font-bold mb-6">Welcome to ADA Blogs</h1>
           <p className="text-xl text-muted-foreground mb-8">
             The place for all your blogging needs.
           </p>
@@ -46,9 +46,9 @@ export default function Index() {
           )}
         </div>
       </section>
-      
+
       <Separator className="my-0" />
-      
+
       <section className="container py-16">
         <h2 className="text-3xl font-semibold mb-8">Latest Posts</h2>
         {isLoading ? (
