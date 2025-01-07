@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState, useRef } from "react";
 import { Editor } from '@tinymce/tinymce-react';
+import { useQuery } from "@tanstack/react-query";
 
 interface PostForm {
   title: string;
@@ -18,6 +19,14 @@ export default function CreatePost() {
   const { toast } = useToast();
   const [userId, setUserId] = useState<string | null>(null);
   const editorRef = useRef<any>(null);
+
+  const { data: editorConfig } = useQuery({
+    queryKey: ['tinymce-key'],
+    queryFn: async () => {
+      const response = await supabase.functions.invoke('get-tinymce-key');
+      return response.data;
+    },
+  });
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -83,7 +92,7 @@ export default function CreatePost() {
             Content
           </label>
           <Editor
-            apiKey="no-api-key"
+            apiKey={editorConfig?.apiKey}
             onInit={(evt, editor) => editorRef.current = editor}
             init={{
               height: 400,
