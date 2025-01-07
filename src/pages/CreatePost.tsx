@@ -4,62 +4,13 @@ import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { useEffect, useState, useRef } from "react";
-import { Separator } from "@/components/ui/separator";
-import {
-  Bold,
-  Italic,
-  Underline,
-  ListOrdered,
-  List,
-  IndentIncrease,
-  IndentDecrease,
-  Link as LinkIcon,
-  Heading1,
-  Heading2,
-  Heading3,
-} from "lucide-react";
+import { EditorToolbar } from "@/components/editor/EditorToolbar";
 
 interface PostForm {
   title: string;
   content: string;
 }
-
-interface EditorButtonProps {
-  icon: React.ReactNode;
-  tooltip: string;
-  onClick: () => void;
-  isActive?: boolean;
-}
-
-const EditorButton = ({ icon, tooltip, onClick, isActive }: EditorButtonProps) => (
-  <TooltipProvider>
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className={`h-8 w-8 p-0 ${
-            isActive ? "bg-secondary text-secondary-foreground" : ""
-          }`}
-          onClick={onClick}
-        >
-          {icon}
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>
-        <p>{tooltip}</p>
-      </TooltipContent>
-    </Tooltip>
-  </TooltipProvider>
-);
 
 export default function CreatePost() {
   const { register, handleSubmit, setValue } = useForm<PostForm>();
@@ -113,23 +64,30 @@ export default function CreatePost() {
     }
   };
 
-  const applyStyle = (style: string, value: string | null = null) => {
+  const applyFormat = (command: string, value: string | null = null) => {
     if (editorRef.current) {
-      document.execCommand(style, false, value);
+      // Save the current selection
+      const selection = window.getSelection();
+      const range = selection?.getRangeAt(0);
+
+      // Execute the command
+      document.execCommand(command, false, value);
+
+      // Restore focus and selection
+      editorRef.current.focus();
+      if (selection && range) {
+        selection.removeAllRanges();
+        selection.addRange(range);
+      }
+
+      // Update the form value
       const content = editorRef.current.innerHTML;
       setValue("content", content);
     }
   };
 
-  const isActive = (style: string) => {
-    return document.queryCommandState(style);
-  };
-
-  const insertLink = () => {
-    const url = prompt("Enter the URL:");
-    if (url) {
-      applyStyle("createLink", url);
-    }
+  const isFormatActive = (format: string) => {
+    return document.queryCommandState(format);
   };
 
   return (
@@ -150,92 +108,10 @@ export default function CreatePost() {
           <label htmlFor="content" className="block text-sm font-medium mb-1">
             Content
           </label>
-          <div className="border rounded-lg p-2 mb-2">
-            <div className="flex flex-wrap items-center gap-1">
-              <div className="flex items-center gap-1">
-                <EditorButton
-                  icon={<Bold className="h-4 w-4" />}
-                  tooltip="Bold"
-                  onClick={() => applyStyle("bold")}
-                  isActive={isActive("bold")}
-                />
-                <EditorButton
-                  icon={<Italic className="h-4 w-4" />}
-                  tooltip="Italic"
-                  onClick={() => applyStyle("italic")}
-                  isActive={isActive("italic")}
-                />
-                <EditorButton
-                  icon={<Underline className="h-4 w-4" />}
-                  tooltip="Underline"
-                  onClick={() => applyStyle("underline")}
-                  isActive={isActive("underline")}
-                />
-              </div>
-
-              <Separator orientation="vertical" className="h-6 mx-1" />
-
-              <div className="flex items-center gap-1">
-                <EditorButton
-                  icon={<List className="h-4 w-4" />}
-                  tooltip="Bullet List"
-                  onClick={() => applyStyle("insertUnorderedList")}
-                  isActive={isActive("insertUnorderedList")}
-                />
-                <EditorButton
-                  icon={<ListOrdered className="h-4 w-4" />}
-                  tooltip="Numbered List"
-                  onClick={() => applyStyle("insertOrderedList")}
-                  isActive={isActive("insertOrderedList")}
-                />
-              </div>
-
-              <Separator orientation="vertical" className="h-6 mx-1" />
-
-              <div className="flex items-center gap-1">
-                <EditorButton
-                  icon={<IndentDecrease className="h-4 w-4" />}
-                  tooltip="Decrease Indent"
-                  onClick={() => applyStyle("outdent")}
-                />
-                <EditorButton
-                  icon={<IndentIncrease className="h-4 w-4" />}
-                  tooltip="Increase Indent"
-                  onClick={() => applyStyle("indent")}
-                />
-              </div>
-
-              <Separator orientation="vertical" className="h-6 mx-1" />
-
-              <div className="flex items-center gap-1">
-                <EditorButton
-                  icon={<LinkIcon className="h-4 w-4" />}
-                  tooltip="Insert Link"
-                  onClick={insertLink}
-                />
-              </div>
-
-              <Separator orientation="vertical" className="h-6 mx-1" />
-
-              <div className="flex items-center gap-1">
-                <EditorButton
-                  icon={<Heading1 className="h-4 w-4" />}
-                  tooltip="Heading 1"
-                  onClick={() => applyStyle("formatBlock", "<h1>")}
-                />
-                <EditorButton
-                  icon={<Heading2 className="h-4 w-4" />}
-                  tooltip="Heading 2"
-                  onClick={() => applyStyle("formatBlock", "<h2>")}
-                />
-                <EditorButton
-                  icon={<Heading3 className="h-4 w-4" />}
-                  tooltip="Heading 3"
-                  onClick={() => applyStyle("formatBlock", "<h3>")}
-                />
-              </div>
-            </div>
-          </div>
+          <EditorToolbar 
+            onFormatText={applyFormat}
+            getFormatState={isFormatActive}
+          />
           <div
             ref={editorRef}
             contentEditable
