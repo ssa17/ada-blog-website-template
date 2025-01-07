@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState, useRef } from "react";
 import { EditorToolbar } from "@/components/editor/EditorToolbar";
 
@@ -29,7 +29,24 @@ export default function CreatePost() {
       }
     };
     checkAuth();
+
+    // Initialize the editor
+    if (editorRef.current) {
+      editorRef.current.addEventListener('paste', handlePaste);
+    }
+
+    return () => {
+      if (editorRef.current) {
+        editorRef.current.removeEventListener('paste', handlePaste);
+      }
+    };
   }, [navigate]);
+
+  const handlePaste = (e: ClipboardEvent) => {
+    e.preventDefault();
+    const text = e.clipboardData?.getData('text/plain');
+    document.execCommand('insertText', false, text);
+  };
 
   const onSubmit = async (data: PostForm) => {
     if (!userId) {
@@ -65,34 +82,38 @@ export default function CreatePost() {
   };
 
   const applyFormat = (command: string, value: string | null = null) => {
+    if (!editorRef.current) return;
+    
+    editorRef.current.focus();
     document.execCommand('styleWithCSS', false, 'true');
     
-    // Save the current selection
-    const selection = window.getSelection();
-    const range = selection?.getRangeAt(0);
-
-    // Focus the editor before applying the command
-    if (editorRef.current) {
-      editorRef.current.focus();
+    // Handle special cases for lists and headers
+    if (command === 'formatBlock' && value === 'p') {
+      document.execCommand('removeFormat', false, null);
+      document.execCommand(command, false, value);
+    } else if (command === 'insertUnorderedList' || command === 'insertOrderedList') {
+      const isActive = document.queryCommandState(command);
+      if (isActive) {
+        document.execCommand('outdent', false, null);
+      }
+      document.execCommand(command, false, null);
+    } else {
+      document.execCommand(command, false, value);
     }
 
-    // Apply the formatting command
-    document.execCommand(command, false, value);
-
-    // Restore the selection if needed
-    if (selection && range && !selection.rangeCount) {
-      selection.removeAllRanges();
-      selection.addRange(range);
-    }
-
-    // Update the form value with the new HTML content
-    if (editorRef.current) {
-      setValue("content", editorRef.current.innerHTML);
-    }
+    // Update form value with new content
+    setValue("content", editorRef.current.innerHTML);
+    
+    // Ensure editor keeps focus
+    editorRef.current.focus();
   };
 
   const isFormatActive = (format: string) => {
-    return document.queryCommandState(format);
+    try {
+      return document.queryCommandState(format);
+    } catch (e) {
+      return false;
+    }
   };
 
   return (
@@ -120,9 +141,15 @@ export default function CreatePost() {
           <div
             ref={editorRef}
             contentEditable
-            className="w-full min-h-[200px] p-4 border rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 prose prose-sm"
+            className="w-full min-h-[200px] p-4 border rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 prose prose-sm max-w-none"
             onInput={(e) => {
               setValue("content", e.currentTarget.innerHTML);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                document.execCommand('insertLineBreak', false);
+              }
             }}
             onFocus={() => {
               document.execCommand('styleWithCSS', false, 'true');
