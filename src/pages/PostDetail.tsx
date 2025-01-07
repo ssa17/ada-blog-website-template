@@ -77,16 +77,23 @@ export default function PostDetail() {
 
   const isAuthor = session?.user?.id === post.author_id;
 
+  // Configure DOMPurify to allow code blocks
+  const sanitizeConfig = {
+    ADD_TAGS: ['pre', 'code'],
+    ADD_ATTR: ['class'],
+  };
+
   return (
     <div className="container max-w-3xl mx-auto mt-8 p-4">
-      <article className="prose lg:prose-xl max-w-none">
+      <article className="prose lg:prose-xl max-w-none dark:prose-invert">
         <h1>{post.title}</h1>
         <div className="text-sm text-muted-foreground mb-4">
           By {post.profiles?.username} • {new Date(post.created_at).toLocaleDateString()}
         </div>
         <div 
+          className="[&_pre]:bg-muted [&_pre]:p-4 [&_pre]:rounded-lg [&_pre]:overflow-x-auto [&_code]:text-sm [&_code]:font-mono"
           dangerouslySetInnerHTML={{ 
-            __html: DOMPurify.sanitize(post.content) 
+            __html: DOMPurify.sanitize(post.content, sanitizeConfig) 
           }} 
         />
       </article>
