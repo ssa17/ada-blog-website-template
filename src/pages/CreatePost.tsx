@@ -65,24 +65,29 @@ export default function CreatePost() {
   };
 
   const applyFormat = (command: string, value: string | null = null) => {
+    document.execCommand('styleWithCSS', false, 'true');
+    
+    // Save the current selection
+    const selection = window.getSelection();
+    const range = selection?.getRangeAt(0);
+
+    // Focus the editor before applying the command
     if (editorRef.current) {
-      // Save the current selection
-      const selection = window.getSelection();
-      const range = selection?.getRangeAt(0);
-
-      // Execute the command
-      document.execCommand(command, false, value);
-
-      // Restore focus and selection
       editorRef.current.focus();
-      if (selection && range) {
-        selection.removeAllRanges();
-        selection.addRange(range);
-      }
+    }
 
-      // Update the form value
-      const content = editorRef.current.innerHTML;
-      setValue("content", content);
+    // Apply the formatting command
+    document.execCommand(command, false, value);
+
+    // Restore the selection if needed
+    if (selection && range && !selection.rangeCount) {
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+
+    // Update the form value with the new HTML content
+    if (editorRef.current) {
+      setValue("content", editorRef.current.innerHTML);
     }
   };
 
@@ -116,10 +121,11 @@ export default function CreatePost() {
             ref={editorRef}
             contentEditable
             className="w-full min-h-[200px] p-4 border rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 prose prose-sm"
-            onInput={() => {
-              if (editorRef.current) {
-                setValue("content", editorRef.current.innerHTML);
-              }
+            onInput={(e) => {
+              setValue("content", e.currentTarget.innerHTML);
+            }}
+            onFocus={() => {
+              document.execCommand('styleWithCSS', false, 'true');
             }}
           />
         </div>
