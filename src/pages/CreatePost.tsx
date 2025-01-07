@@ -20,13 +20,24 @@ export default function CreatePost() {
   const [userId, setUserId] = useState<string | null>(null);
   const editorRef = useRef<any>(null);
 
-  const { data: editorConfig } = useQuery({
+  const { data: editorConfig, isLoading, error } = useQuery({
     queryKey: ['tinymce-key'],
     queryFn: async () => {
       const response = await supabase.functions.invoke('get-tinymce-key');
+      if (response.error) throw response.error;
       return response.data;
     },
   });
+
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load the editor. Please try again later.",
+        variant: "destructive",
+      });
+    }
+  }, [error, toast]);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -73,6 +84,18 @@ export default function CreatePost() {
     }
   };
 
+  if (isLoading) {
+    return <div className="container max-w-2xl mx-auto mt-8 p-4">Loading editor...</div>;
+  }
+
+  if (error || !editorConfig?.apiKey) {
+    return (
+      <div className="container max-w-2xl mx-auto mt-8 p-4">
+        <div className="text-red-500">Failed to load editor. Please try again later.</div>
+      </div>
+    );
+  }
+
   return (
     <div className="container max-w-2xl mx-auto mt-8 p-4">
       <h1 className="text-2xl font-bold mb-6">Create New Post</h1>
@@ -92,7 +115,7 @@ export default function CreatePost() {
             Content
           </label>
           <Editor
-            apiKey={editorConfig?.apiKey}
+            apiKey={editorConfig.apiKey}
             onInit={(evt, editor) => editorRef.current = editor}
             init={{
               height: 400,
