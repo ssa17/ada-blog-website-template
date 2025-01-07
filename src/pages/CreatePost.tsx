@@ -97,21 +97,22 @@ export default function CreatePost() {
   }
 
   return (
-    <div className="container max-w-2xl mx-auto mt-8 p-4">
+    <div className="container max-w-2xl mx-auto mt-8 px-4 md:px-0">
       <h1 className="text-2xl font-bold mb-6">Create New Post</h1>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div>
-          <label htmlFor="title" className="block text-sm font-medium mb-1">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <div className="space-y-2">
+          <label htmlFor="title" className="block text-sm font-medium text-gray-700">
             Title
           </label>
           <Input
             id="title"
             {...register("title", { required: true })}
-            className="w-full"
+            className="w-full max-w-2xl"
+            placeholder="Enter your post title"
           />
         </div>
-        <div>
-          <label htmlFor="content" className="block text-sm font-medium mb-1">
+        <div className="space-y-2">
+          <label htmlFor="content" className="block text-sm font-medium text-gray-700">
             Content
           </label>
           <Editor
@@ -136,7 +137,7 @@ export default function CreatePost() {
             }}
           />
         </div>
-        <Button type="submit">Create Post</Button>
+        <Button type="submit" className="w-full md:w-auto">Create Post</Button>
       </form>
     </div>
   );
