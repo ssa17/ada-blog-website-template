@@ -15,11 +15,12 @@ interface PostForm {
 
 export default function EditPost() {
   const { id } = useParams();
-  const { register, handleSubmit, setValue, reset } = useForm<PostForm>();
+  const { register, handleSubmit, setValue } = useForm<PostForm>();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [userId, setUserId] = useState<string | null>(null);
   const editorRef = useRef<any>(null);
+  const [initialContent, setInitialContent] = useState<string>("");
 
   const { data: editorConfig, isLoading: isEditorLoading, error: editorError } = useQuery({
     queryKey: ['tinymce-key'],
@@ -42,15 +43,15 @@ export default function EditPost() {
       if (error) throw error;
       return data;
     },
-    meta: {
-      onSuccess: (data) => {
-        reset({
-          title: data.title,
-          content: data.content,
-        });
-      }
-    }
   });
+
+  // Set initial values only once when data is first loaded
+  useEffect(() => {
+    if (post && !initialContent) {
+      setValue("title", post.title);
+      setInitialContent(post.content);
+    }
+  }, [post, setValue, initialContent]);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -131,7 +132,6 @@ export default function EditPost() {
           </label>
           <Input
             id="title"
-            defaultValue={post.title}
             {...register("title", { required: true })}
             className="w-full"
             placeholder="Enter your post title"
@@ -144,7 +144,7 @@ export default function EditPost() {
           <Editor
             apiKey={editorConfig.apiKey}
             onInit={(evt, editor) => editorRef.current = editor}
-            initialValue={post.content}
+            initialValue={initialContent}
             init={{
               height: 400,
               menubar: false,
