@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState, useRef } from "react";
-import { EditorToolbar } from "@/components/editor/EditorToolbar";
+import { Editor } from '@tinymce/tinymce-react';
 
 interface PostForm {
   title: string;
@@ -17,7 +17,7 @@ export default function CreatePost() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [userId, setUserId] = useState<string | null>(null);
-  const editorRef = useRef<HTMLDivElement>(null);
+  const editorRef = useRef<any>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -29,24 +29,7 @@ export default function CreatePost() {
       }
     };
     checkAuth();
-
-    // Initialize the editor
-    if (editorRef.current) {
-      editorRef.current.addEventListener('paste', handlePaste);
-    }
-
-    return () => {
-      if (editorRef.current) {
-        editorRef.current.removeEventListener('paste', handlePaste);
-      }
-    };
   }, [navigate]);
-
-  const handlePaste = (e: ClipboardEvent) => {
-    e.preventDefault();
-    const text = e.clipboardData?.getData('text/plain');
-    document.execCommand('insertText', false, text);
-  };
 
   const onSubmit = async (data: PostForm) => {
     if (!userId) {
@@ -81,41 +64,6 @@ export default function CreatePost() {
     }
   };
 
-  const applyFormat = (command: string, value: string | null = null) => {
-    if (!editorRef.current) return;
-    
-    editorRef.current.focus();
-    document.execCommand('styleWithCSS', false, 'true');
-    
-    // Handle special cases for lists and headers
-    if (command === 'formatBlock' && value === 'p') {
-      document.execCommand('removeFormat', false, null);
-      document.execCommand(command, false, value);
-    } else if (command === 'insertUnorderedList' || command === 'insertOrderedList') {
-      const isActive = document.queryCommandState(command);
-      if (isActive) {
-        document.execCommand('outdent', false, null);
-      }
-      document.execCommand(command, false, null);
-    } else {
-      document.execCommand(command, false, value);
-    }
-
-    // Update form value with new content
-    setValue("content", editorRef.current.innerHTML);
-    
-    // Ensure editor keeps focus
-    editorRef.current.focus();
-  };
-
-  const isFormatActive = (format: string) => {
-    try {
-      return document.queryCommandState(format);
-    } catch (e) {
-      return false;
-    }
-  };
-
   return (
     <div className="container max-w-2xl mx-auto mt-8 p-4">
       <h1 className="text-2xl font-bold mb-6">Create New Post</h1>
@@ -134,25 +82,25 @@ export default function CreatePost() {
           <label htmlFor="content" className="block text-sm font-medium mb-1">
             Content
           </label>
-          <EditorToolbar 
-            onFormatText={applyFormat}
-            getFormatState={isFormatActive}
-          />
-          <div
-            ref={editorRef}
-            contentEditable
-            className="w-full min-h-[200px] p-4 border rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 prose prose-sm max-w-none"
-            onInput={(e) => {
-              setValue("content", e.currentTarget.innerHTML);
+          <Editor
+            apiKey="no-api-key"
+            onInit={(evt, editor) => editorRef.current = editor}
+            init={{
+              height: 400,
+              menubar: false,
+              plugins: [
+                'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+                'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
+              ],
+              toolbar: 'undo redo | blocks | ' +
+                'bold italic forecolor | alignleft aligncenter ' +
+                'alignright alignjustify | bullist numlist outdent indent | ' +
+                'removeformat | help',
+              content_style: 'body { font-family:Inter,Arial,sans-serif; font-size:14px }'
             }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                document.execCommand('insertLineBreak', false);
-              }
-            }}
-            onFocus={() => {
-              document.execCommand('styleWithCSS', false, 'true');
+            onEditorChange={(content) => {
+              setValue("content", content);
             }}
           />
         </div>
