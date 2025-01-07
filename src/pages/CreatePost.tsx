@@ -85,19 +85,19 @@ export default function CreatePost() {
   };
 
   if (isLoading) {
-    return <div className="container max-w-2xl mx-auto mt-8 p-4">Loading editor...</div>;
+    return <div className="max-w-5xl mx-auto mt-8 p-4">Loading editor...</div>;
   }
 
   if (error || !editorConfig?.apiKey) {
     return (
-      <div className="container max-w-2xl mx-auto mt-8 p-4">
+      <div className="max-w-5xl mx-auto mt-8 p-4">
         <div className="text-red-500">Failed to load editor. Please try again later.</div>
       </div>
     );
   }
 
   return (
-    <div className="container max-w-2xl mx-auto mt-8 px-4 md:px-0">
+    <div className="max-w-5xl mx-auto mt-8 px-4 md:px-6">
       <h1 className="text-2xl font-bold mb-6">Create New Post</h1>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="space-y-2">
@@ -107,7 +107,7 @@ export default function CreatePost() {
           <Input
             id="title"
             {...register("title", { required: true })}
-            className="w-full max-w-2xl"
+            className="w-full"
             placeholder="Enter your post title"
           />
         </div>
