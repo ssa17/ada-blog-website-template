@@ -1,7 +1,8 @@
 import { render } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
-import { ThemeProvider } from '@/components/theme-provider';
+import { ThemeProvider } from '../components/theme-provider';
+import { vi } from 'vitest';
 
 const queryClient = new QueryClient({
   defaultOptions: {
