@@ -58,6 +58,10 @@ const renderComponent = () => {
 };
 
 describe("Index", () => {
+  beforeEach(() => {
+    queryClient.clear();
+  });
+
   it("renders the welcome section", () => {
     renderComponent();
     expect(screen.getByText(/Welcome to ADA Blogs/i)).toBeInTheDocument();
@@ -77,16 +81,29 @@ describe("Index", () => {
     });
   });
 
-  it("shows loading state while fetching posts", () => {
+  it("shows loading state while fetching posts", async () => {
+    // Mock a delayed response
+    vi.mocked(supabase.from).mockReturnValue({
+      select: vi.fn().mockReturnThis(),
+      order: vi.fn().mockImplementation(() => new Promise(resolve => setTimeout(resolve, 100)))
+    });
+
     renderComponent();
-    expect(screen.getByText(/loading posts/i)).toBeInTheDocument();
+    expect(screen.getByText(/Loading posts/i)).toBeInTheDocument();
   });
 
   it("displays create post button for authenticated users", async () => {
     vi.mocked(supabase.auth.getSession).mockResolvedValueOnce({
       data: {
         session: {
-          user: { id: '1', email: 'test@test.com' }
+          user: { 
+            id: '1',
+            email: 'test@test.com',
+            app_metadata: {},
+            user_metadata: {},
+            aud: 'authenticated',
+            created_at: '2021-01-01'
+          }
         }
       },
       error: null

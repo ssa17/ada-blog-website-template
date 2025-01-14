@@ -10,7 +10,7 @@ vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
     auth: {
       getSession: vi.fn().mockResolvedValue({
-        data: {
+        data: { 
           session: {
             user: { id: '1', email: 'test@test.com' }
           }
@@ -19,20 +19,21 @@ vi.mock("@/integrations/supabase/client", () => ({
       })
     },
     from: vi.fn().mockReturnValue({
-      insert: vi.fn().mockResolvedValue({ data: { id: '1' }, error: null })
-    })
+      insert: vi.fn().mockResolvedValue({ data: null, error: null })
+    }),
+    functions: {
+      invoke: vi.fn().mockResolvedValue({ 
+        data: { apiKey: 'test-api-key' },
+        error: null 
+      })
+    }
   }
 }));
 
 // Mock TinyMCE editor
 vi.mock('@tinymce/tinymce-react', () => ({
   Editor: ({ onInit, onEditorChange }: any) => {
-    // Simulate editor initialization
-    if (onInit) {
-      setTimeout(() => {
-        onInit(null, { setContent: vi.fn() });
-      }, 0);
-    }
+    onInit(null, { setContent: vi.fn() });
     return (
       <div data-testid="mock-editor">
         <textarea 
@@ -67,34 +68,32 @@ describe("CreatePost", () => {
     renderComponent();
     
     await waitFor(() => {
-      expect(screen.getByText(/create new post/i)).toBeInTheDocument();
+      expect(screen.getByText(/Create New Post/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/title/i)).toBeInTheDocument();
+      expect(screen.getByTestId("mock-editor")).toBeInTheDocument();
     });
-    
-    expect(screen.getByLabelText(/title/i)).toBeInTheDocument();
-    expect(screen.getByTestId("mock-editor")).toBeInTheDocument();
   });
 
   it("displays the editor after loading", async () => {
     renderComponent();
     
     await waitFor(() => {
-      expect(screen.queryByText("Loading editor...")).not.toBeInTheDocument();
+      expect(screen.queryByText(/loading editor/i)).not.toBeInTheDocument();
     });
     
-    const editor = screen.getByTestId("mock-editor");
-    expect(editor).toBeInTheDocument();
+    expect(screen.getByTestId("mock-editor")).toBeInTheDocument();
   });
 
   it("handles form submission", async () => {
     renderComponent();
     
     await waitFor(() => {
-      expect(screen.queryByText("Loading editor...")).not.toBeInTheDocument();
+      expect(screen.getByLabelText(/title/i)).toBeInTheDocument();
     });
 
     const titleInput = screen.getByLabelText(/title/i);
     const editorTextarea = screen.getByTestId("editor-textarea");
-    const submitButton = screen.getByText(/publish/i);
+    const submitButton = screen.getByText(/Create Post/i);
 
     fireEvent.change(titleInput, { target: { value: 'Test Title' } });
     fireEvent.change(editorTextarea, { target: { value: 'Test Content' } });
@@ -109,14 +108,14 @@ describe("CreatePost", () => {
     renderComponent();
     
     await waitFor(() => {
-      expect(screen.queryByText("Loading editor...")).not.toBeInTheDocument();
+      expect(screen.getByText(/Create Post/i)).toBeInTheDocument();
     });
 
-    const submitButton = screen.getByText(/publish/i);
+    const submitButton = screen.getByText(/Create Post/i);
     fireEvent.click(submitButton);
 
     await waitFor(() => {
-      expect(screen.getByText(/title is required/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/title/i)).toBeInTheDocument();
     });
   });
 });

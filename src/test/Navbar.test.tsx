@@ -3,16 +3,8 @@ import { MemoryRouter } from "react-router-dom";
 import { describe, it, expect, vi } from 'vitest';
 import { Navbar } from "../components/Navbar";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: false,
-    },
-  },
-});
-
-// Mock supabase client
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
     auth: {
@@ -21,6 +13,14 @@ vi.mock("@/integrations/supabase/client", () => ({
     }
   }
 }));
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+    },
+  },
+});
 
 const renderWithProviders = (ui: React.ReactElement) => {
   return render(
@@ -31,12 +31,22 @@ const renderWithProviders = (ui: React.ReactElement) => {
 };
 
 describe("Navbar", () => {
+  beforeEach(() => {
+    queryClient.clear();
+    vi.clearAllMocks();
+  });
+
   it("renders navigation links", () => {
     renderWithProviders(<Navbar />);
     expect(screen.getByText("ADA Blogs")).toBeInTheDocument();
   });
 
   it("shows sign in when user is not authenticated", () => {
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({
+      data: { session: null },
+      error: null
+    });
+
     renderWithProviders(<Navbar />);
     expect(screen.getByText(/sign in/i)).toBeInTheDocument();
     expect(screen.getByText(/sign up/i)).toBeInTheDocument();
@@ -47,7 +57,14 @@ describe("Navbar", () => {
     vi.mocked(supabase.auth.getSession).mockResolvedValue({
       data: {
         session: {
-          user: { id: '1', email: 'test@test.com' }
+          user: { 
+            id: '1',
+            email: 'test@test.com',
+            app_metadata: {},
+            user_metadata: {},
+            aud: 'authenticated',
+            created_at: '2021-01-01'
+          }
         }
       },
       error: null
@@ -66,7 +83,14 @@ describe("Navbar", () => {
     vi.mocked(supabase.auth.getSession).mockResolvedValue({
       data: {
         session: {
-          user: { id: '1', email: 'test@test.com' }
+          user: { 
+            id: '1',
+            email: 'test@test.com',
+            app_metadata: {},
+            user_metadata: {},
+            aud: 'authenticated',
+            created_at: '2021-01-01'
+          }
         }
       },
       error: null
