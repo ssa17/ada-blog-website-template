@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Navbar } from "../components/Navbar";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -64,7 +64,11 @@ describe("Navbar", () => {
             user_metadata: {},
             aud: 'authenticated',
             created_at: '2021-01-01'
-          }
+          },
+          access_token: 'mock-token',
+          refresh_token: 'mock-refresh-token',
+          expires_in: 3600,
+          token_type: 'bearer'
         }
       },
       error: null
@@ -90,7 +94,11 @@ describe("Navbar", () => {
             user_metadata: {},
             aud: 'authenticated',
             created_at: '2021-01-01'
-          }
+          },
+          access_token: 'mock-token',
+          refresh_token: 'mock-refresh-token',
+          expires_in: 3600,
+          token_type: 'bearer'
         }
       },
       error: null

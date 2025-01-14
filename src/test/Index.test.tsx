@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import Index from "../pages/Index";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -89,7 +89,7 @@ describe("Index", () => {
     });
 
     renderComponent();
-    expect(screen.getByText(/Loading posts/i)).toBeInTheDocument();
+    expect(screen.getByText(/loading posts/i)).toBeInTheDocument();
   });
 
   it("displays create post button for authenticated users", async () => {
@@ -103,7 +103,11 @@ describe("Index", () => {
             user_metadata: {},
             aud: 'authenticated',
             created_at: '2021-01-01'
-          }
+          },
+          access_token: 'mock-token',
+          refresh_token: 'mock-refresh-token',
+          expires_in: 3600,
+          token_type: 'bearer'
         }
       },
       error: null
