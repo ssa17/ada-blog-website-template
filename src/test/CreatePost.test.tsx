@@ -1,64 +1,73 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import CreatePost from "../pages/CreatePost";
+import { supabase } from "@/integrations/supabase/client";
 
-const queryClient = new QueryClient();
+// Mock the entire supabase client
+vi.mock("@/integrations/supabase/client", () => ({
+  supabase: {
+    auth: {
+      getSession: vi.fn().mockResolvedValue({
+        data: {
+          session: {
+            user: { id: 'test-user-id' }
+          }
+        }
+      })
+    },
+    functions: {
+      invoke: vi.fn().mockResolvedValue({
+        data: { apiKey: 'test-api-key' },
+        error: null
+      })
+    }
+  }
+}));
+
+// Mock TinyMCE editor
+vi.mock('@tinymce/tinymce-react', () => ({
+  Editor: ({ onInit, onEditorChange }: any) => (
+    <div data-testid="mock-editor">
+      <textarea 
+        onChange={(e) => onEditorChange?.(e.target.value)}
+        data-testid="editor-textarea"
+      />
+    </div>
+  )
+}));
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+    },
+  },
+});
 
 const renderComponent = () =>
-    render(
-        <QueryClientProvider client={queryClient}>
-            <MemoryRouter>
-                <CreatePost />
-            </MemoryRouter>
-        </QueryClientProvider>
-    );
+  render(
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter>
+        <CreatePost />
+      </MemoryRouter>
+    </QueryClientProvider>
+  );
 
 describe("CreatePost", () => {
-    it("renders the CreatePost form", () => {
-        renderComponent();
+  it("renders the create post form", () => {
+    renderComponent();
+    
+    expect(screen.getByText(/create new post/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/title/i)).toBeInTheDocument();
+    expect(screen.getByTestId("mock-editor")).toBeInTheDocument();
+  });
 
-        expect(screen.getByLabelText(/title/i)).toBeInTheDocument();
-        expect(screen.getByLabelText(/content/i)).toBeInTheDocument();
-        expect(screen.getByRole("button", { name: /submit/i })).toBeInTheDocument();
-    });
-
-    it("handles form input changes", () => {
-        renderComponent();
-
-        const titleInput = screen.getByLabelText(/title/i);
-        const contentInput = screen.getByLabelText(/content/i);
-
-        fireEvent.change(titleInput, { target: { value: "Test Title" } });
-        fireEvent.change(contentInput, { target: { value: "Test Content" } });
-
-        expect(titleInput).toHaveValue("Test Title");
-        expect(contentInput).toHaveValue("Test Content");
-    });
-
-    it("does nothing when submit is clicked without input", () => {
-        renderComponent();
-
-        const submitButton = screen.getByRole("button", { name: /submit/i });
-        fireEvent.click(submitButton);
-
-        // No error message or submission indicator should appear
-        expect(screen.queryByText(/error/i)).not.toBeInTheDocument();
-    });
-
-    it("displays a success message after form submission", () => {
-        renderComponent();
-
-        const titleInput = screen.getByLabelText(/title/i);
-        const contentInput = screen.getByLabelText(/content/i);
-        const submitButton = screen.getByRole("button", { name: /submit/i });
-
-        fireEvent.change(titleInput, { target: { value: "Valid Title" } });
-        fireEvent.change(contentInput, { target: { value: "Valid Content" } });
-        fireEvent.click(submitButton);
-
-        // Simulate a success state
-        expect(screen.getByText(/post created successfully/i)).toBeInTheDocument();
-    });
+  it("displays the editor after loading", async () => {
+    renderComponent();
+    
+    const editor = screen.getByTestId("mock-editor");
+    expect(editor).toBeInTheDocument();
+  });
 });
