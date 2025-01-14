@@ -1,14 +1,14 @@
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, it, expect } from 'vitest';
-import BlogCard from "../components/BlogCard";
+import { BlogCard } from "../components/BlogCard";
 
 const mockPost = {
   id: '1',
   title: 'Test Post',
   content: '<p>Test content</p>',
   created_at: new Date().toISOString(),
-  author: {
+  profiles: {
     username: 'testuser'
   }
 };
@@ -22,7 +22,7 @@ describe("BlogCard", () => {
     );
 
     expect(screen.getByText(mockPost.title)).toBeInTheDocument();
-    expect(screen.getByText(mockPost.author.username)).toBeInTheDocument();
+    expect(screen.getByText(`By ${mockPost.profiles.username} • ${new Date(mockPost.created_at).toLocaleDateString()}`)).toBeInTheDocument();
   });
 
   it("renders truncated content", () => {
@@ -35,8 +35,7 @@ describe("BlogCard", () => {
       </MemoryRouter>
     );
 
-    // Content should be truncated
-    const displayedContent = screen.getByTestId('blog-card-content');
+    const displayedContent = screen.getByText(/Very long content/);
     expect(displayedContent.textContent?.length).toBeLessThan(longContent.length);
   });
 });
