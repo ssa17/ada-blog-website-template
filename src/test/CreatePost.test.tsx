@@ -1,28 +1,26 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
 import { describe, it, expect, vi } from 'vitest';
 import CreatePost from "../pages/CreatePost";
 import { supabase } from "@/integrations/supabase/client";
 
-// Mock the entire supabase client
+// Mock supabase client
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
     auth: {
       getSession: vi.fn().mockResolvedValue({
         data: {
           session: {
-            user: { id: 'test-user-id' }
+            user: { id: '1', email: 'test@test.com' }
           }
-        }
-      })
-    },
-    functions: {
-      invoke: vi.fn().mockResolvedValue({
-        data: { apiKey: 'test-api-key' },
+        },
         error: null
       })
-    }
+    },
+    from: vi.fn().mockReturnValue({
+      insert: vi.fn().mockResolvedValue({ data: { id: '1' }, error: null })
+    })
   }
 }));
 
@@ -54,20 +52,20 @@ const queryClient = new QueryClient({
   },
 });
 
-const renderComponent = () =>
-  render(
+const renderComponent = () => {
+  return render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter>
         <CreatePost />
       </MemoryRouter>
     </QueryClientProvider>
   );
+};
 
 describe("CreatePost", () => {
   it("renders the create post form", async () => {
     renderComponent();
     
-    // Wait for the editor to load and component to render fully
     await waitFor(() => {
       expect(screen.getByText(/create new post/i)).toBeInTheDocument();
     });
@@ -79,12 +77,46 @@ describe("CreatePost", () => {
   it("displays the editor after loading", async () => {
     renderComponent();
     
-    // Wait for loading state to resolve
     await waitFor(() => {
       expect(screen.queryByText("Loading editor...")).not.toBeInTheDocument();
     });
     
     const editor = screen.getByTestId("mock-editor");
     expect(editor).toBeInTheDocument();
+  });
+
+  it("handles form submission", async () => {
+    renderComponent();
+    
+    await waitFor(() => {
+      expect(screen.queryByText("Loading editor...")).not.toBeInTheDocument();
+    });
+
+    const titleInput = screen.getByLabelText(/title/i);
+    const editorTextarea = screen.getByTestId("editor-textarea");
+    const submitButton = screen.getByText(/publish/i);
+
+    fireEvent.change(titleInput, { target: { value: 'Test Title' } });
+    fireEvent.change(editorTextarea, { target: { value: 'Test Content' } });
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(supabase.from).toHaveBeenCalledWith('posts');
+    });
+  });
+
+  it("validates required fields", async () => {
+    renderComponent();
+    
+    await waitFor(() => {
+      expect(screen.queryByText("Loading editor...")).not.toBeInTheDocument();
+    });
+
+    const submitButton = screen.getByText(/publish/i);
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(screen.getByText(/title is required/i)).toBeInTheDocument();
+    });
   });
 });
