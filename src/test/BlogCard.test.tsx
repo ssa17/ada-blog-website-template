@@ -8,6 +8,7 @@ const mockPost = {
   title: 'Test Post',
   content: '<p>Test content that is longer than 150 characters. '.repeat(10) + '</p>',
   created_at: new Date().toISOString(),
+  edited_at: null,
   profiles: {
     username: 'testuser'
   }
