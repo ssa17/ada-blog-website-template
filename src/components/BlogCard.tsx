@@ -7,6 +7,7 @@ interface BlogCardProps {
     title: string;
     content: string;
     created_at: string;
+    edited_at: string | null;
     profiles: {
       username: string;
     };
@@ -27,6 +28,7 @@ export function BlogCard({ post }: BlogCardProps) {
           <CardTitle className="text-2xl">{post.title}</CardTitle>
           <p className="text-sm text-muted-foreground">
             {post.profiles?.username ? `By ${post.profiles.username} • ${date}` : date}
+            {post.edited_at && " • Edited"}
           </p>
         </CardHeader>
         <CardContent>
