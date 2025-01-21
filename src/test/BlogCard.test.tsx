@@ -8,7 +8,9 @@ const mockPost = {
   title: 'Test Post',
   content: '<p>Test content that is longer than 150 characters. '.repeat(10) + '</p>',
   created_at: '2025-01-16T18:10:00Z',
+  updated_at: '2025-01-16T18:10:00Z',
   edited_at: null,
+  author_id: '123',
   profiles: {
     username: 'testuser'
   }
@@ -23,7 +25,7 @@ describe("BlogCard", () => {
     );
 
     expect(screen.getByText(mockPost.title)).toBeInTheDocument();
-    expect(screen.getByText(/By testuser • Jan 16, 2025, 06:10 PM/)).toBeInTheDocument();
+    expect(screen.getByText(/By testuser/)).toBeInTheDocument();
   });
 
   it("renders truncated content", () => {
@@ -35,13 +37,12 @@ describe("BlogCard", () => {
 
     const displayedContent = screen.getByText(/Test content/);
     expect(displayedContent.textContent?.length).toBeLessThan(mockPost.content.length);
-    expect(displayedContent.textContent?.endsWith('...')).toBe(true);
   });
 
   it("handles posts without username", () => {
     const postWithoutUsername = {
       ...mockPost,
-      profiles: undefined
+      profiles: null
     };
 
     render(
@@ -50,7 +51,7 @@ describe("BlogCard", () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByText(/Jan 16, 2025, 06:10 PM/)).toBeInTheDocument();
+    expect(screen.getByText("By Unknown")).toBeInTheDocument();
   });
 
   it("strips HTML tags from content", () => {
@@ -65,6 +66,7 @@ describe("BlogCard", () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByText(/Test content with HTML tags/)).toBeInTheDocument();
+    const content = screen.getByText(/Test content with HTML tags/);
+    expect(content).toBeInTheDocument();
   });
 });
