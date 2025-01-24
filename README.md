@@ -79,3 +79,6 @@ Contributions are welcome! Please follow these steps:
    git push origin feature/your-feature-name
    ```
 5. Open a pull request.
+
+Short video tutorial:
+https://youtu.be/6yILEwkuqRA
