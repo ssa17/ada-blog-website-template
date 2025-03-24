@@ -1,11 +1,15 @@
 import { BlogCard } from "@/components/BlogCard";
-import { Tables } from "@/integrations/supabase/types";
 
-type Post = Tables<"posts"> & {
+interface Post {
+  id: string;
+  title: string;
+  content: string;
+  created_at: string;
+  edited_at: string | null;
   profiles: {
     username: string;
-  } | null;
-};
+  };
+}
 
 export function UserPosts({ posts }: { posts: Post[] }) {
   return (
