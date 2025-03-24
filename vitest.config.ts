@@ -1,6 +1,5 @@
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react-swc';
-// @ts-ignore
 import path from 'path';
 
 export default defineConfig({
